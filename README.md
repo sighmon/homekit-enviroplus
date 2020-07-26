@@ -1,7 +1,7 @@
 # HomeKit Enviro+
 An [Apple HomeKit](https://developer.apple.com/homekit/) accessory for the [Pimoroni Enviro+](https://shop.pimoroni.com/products/enviro?variant=31155658457171) running on a Raspberry Pi.
 
-![The accessory added to iOS][_images/homekit-enviroplus.jpg]
+![The accessory added to iOS](_images/homekit-enviroplus.jpg)
 
 ## Dependencies
 
