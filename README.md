@@ -15,7 +15,7 @@ Install this on a Raspberry Pi, or test it on macOS.
 
 ### Setup
 
-1. Install [Go](http://golang.org/doc/install)
+1. Install [Go](http://golang.org/doc/install) >= 1.14 ([useful Gist](https://gist.github.com/pcgeek86/0206d688e6760fe4504ba405024e887c) for Raspberry Pi)
 1. Clone this project: `git clone https://github.com/sighmon/homekit-enviroplus` and then `cd homekit-enviroplus`
 1. Install the Go dependencies: `go get`
 1. Install and run the Prometheus [enviroplus-exporter](https://github.com/sighmon/enviroplus_exporter)
@@ -24,6 +24,7 @@ Install this on a Raspberry Pi, or test it on macOS.
 ### Build
 
 1. To build this accessory: `go build homekit-enviroplus.go`
+1. To cross-compile for Raspberry Pi on macOS: `env GOOS=linux GOARCH=arm GOARM=7 go build homekit-enviroplus.go`
 
 ### Run
 
