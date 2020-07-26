@@ -26,6 +26,16 @@ An [Apple HomeKit](https://developer.apple.com/homekit/) accessory for the [Pimo
 1. Execute the executable: `./homekit-enviroplus`
 1. Or run with the command: `go run homekit-enviroplus.go`
 
+### Optional flags
+
+The flag defaults can be overridden by handing them in at runtime:
+
+* `-host=http://0.0.0.0` The host of your Enviro+ sensor
+* `-port=1006` The port of your Enviro+ sensor
+* `-sleep=5s` The [time](https://golang.org/pkg/time/#ParseDuration) between updating the accessory with sensor readings (`5s` equals five seconds)
+
+e.g. to override the port run: `go run homekit-enviroplus.go -port=8000` or `./homekit-enviroplus -port=8000`
+
 ## Reset this accessory
 
 If you uninstall this accessory from your Apple Home, you'll also need to delete the stored data for it to be able to be re-added.

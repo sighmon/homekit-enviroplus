@@ -4,11 +4,26 @@ import (
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
 
+	"bufio"
+	"flag"
 	"fmt"
 	"log"
-	"math/rand"
+	"net/http"
+	"regexp"
+	"strconv"
 	"time"
 )
+
+var sensorHost string
+var sensorPort int
+var secondsBetweenReadings time.Duration
+
+func init() {
+	flag.StringVar(&sensorHost, "host", "http://0.0.0.0", "sensor host, a string")
+	flag.IntVar(&sensorPort, "port", 1006, "sensor port number, an int")
+	flag.DurationVar(&secondsBetweenReadings, "sleep", 5*time.Second, "how many seconds between sensor readings, an int followed by the duration")
+	flag.Parse()
+}
 
 func main() {
 	info := accessory.Info{
@@ -22,8 +37,8 @@ func main() {
 	acc := accessory.NewTemperatureSensor(
 		info,
 		0.0,             // Initial value
-		-40.0,           // Min value (sensor: -40)
-		85.0,            // Max value (sensor: 85)
+		-40.0,           // Min sensor value
+		85.0,            // Max sensor value
 		0.1,             // Step value
 	)
 
@@ -39,17 +54,37 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Get the sensor readings every n seconds
+	// Get the sensor readings every secondsBetweenReadings
 	go func() {
 		for {
-			// TODO: get readings from Prometheus exporter
-			// For now let's return a random float between 15 and 30
-			sensor_reading := 15 + rand.Float64() * (30 - 15)
+			// Get readings from the Prometheus exporter
+			sensorReading := 0.0
+			resp, err := http.Get(fmt.Sprintf("%s:%d", sensorHost, sensorPort))
+			if err == nil {
+				defer resp.Body.Close()
+				scanner := bufio.NewScanner(resp.Body)
+				for scanner.Scan() {
+					line := scanner.Text()
+					// Parse the temperature reading
+					re := regexp.MustCompile(`^temperature ([-+]?\d*\.\d+|\d+)`)
+					rs := re.FindStringSubmatch(line)
+					if rs != nil {
+						parsedValue, err := strconv.ParseFloat(rs[1], 64)
+						if err == nil {
+							sensorReading = parsedValue
+						}
+					}
+				}
+			} else {
+				log.Println(err)
+			}
 
-			// Set reading
-			acc.TempSensor.CurrentTemperature.SetValue(sensor_reading)
-			log.Println(fmt.Sprintf("Temperature: %f°C", sensor_reading))
-			time.Sleep(5 * time.Second)
+			// Set the temperature reading on the accessory
+			acc.TempSensor.CurrentTemperature.SetValue(sensorReading)
+			log.Println(fmt.Sprintf("Temperature: %f°C", sensorReading))
+
+			// Time between readings
+			time.Sleep(secondsBetweenReadings)
 		}
 	}()
 
