@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -17,12 +18,18 @@ import (
 var sensorHost string
 var sensorPort int
 var secondsBetweenReadings time.Duration
+var developmentMode bool
 
 func init() {
 	flag.StringVar(&sensorHost, "host", "http://0.0.0.0", "sensor host, a string")
 	flag.IntVar(&sensorPort, "port", 1006, "sensor port number, an int")
 	flag.DurationVar(&secondsBetweenReadings, "sleep", 5*time.Second, "how many seconds between sensor readings, an int followed by the duration")
+	flag.BoolVar(&developmentMode, "dev", false, "turn on development mode to return a random temperature reading, boolean")
 	flag.Parse()
+
+	if developmentMode == true {
+		log.Println("Development mode on, ignoring sensor and returning random values...")
+	}
 }
 
 func main() {
@@ -77,6 +84,11 @@ func main() {
 				}
 			} else {
 				log.Println(err)
+			}
+
+			if developmentMode == true {
+				// Return a random float between 15 and 30
+				sensorReading = 15 + rand.Float64() * (30 - 15)
 			}
 
 			// Set the temperature reading on the accessory

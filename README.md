@@ -1,6 +1,8 @@
 # HomeKit Enviro+
 An [Apple HomeKit](https://developer.apple.com/homekit/) accessory for the [Pimoroni Enviro+](https://shop.pimoroni.com/products/enviro?variant=31155658457171) running on a Raspberry Pi.
 
+![The accessory added to iOS][_images/homekit-enviroplus.jpg]
+
 ## Dependencies
 
 * [**Go**](http://golang.org/doc/install) - this accessory is written in Go
@@ -9,12 +11,14 @@ An [Apple HomeKit](https://developer.apple.com/homekit/) accessory for the [Pimo
 
 ## Installation
 
+Install this on a Raspberry Pi, or test it on macOS.
+
 ### Setup
 
 1. Install [Go](http://golang.org/doc/install)
 1. Clone this project: `git clone https://github.com/sighmon/homekit-enviroplus` and then `cd homekit-enviroplus`
 1. Install the Go dependencies: `go get`
-1. Install and run the Python [enviroplus-exporter](https://github.com/sighmon/enviroplus_exporter)
+1. Install and run the Prometheus [enviroplus-exporter](https://github.com/sighmon/enviroplus_exporter)
 1. Optionally if you'd prefer a Docker container of the exporter, see: [balena-enviro-plus](https://github.com/sighmon/balena-enviro-plus)
 
 ### Build
@@ -33,6 +37,7 @@ The flag defaults can be overridden by handing them in at runtime:
 * `-host=http://0.0.0.0` The host of your Enviro+ sensor
 * `-port=1006` The port of your Enviro+ sensor
 * `-sleep=5s` The [time](https://golang.org/pkg/time/#ParseDuration) between updating the accessory with sensor readings (`5s` equals five seconds)
+* `-dev` This turns on development mode to return a random temperature reading without needing to have an Enviro+
 
 e.g. to override the port run: `go run homekit-enviroplus.go -port=8000` or `./homekit-enviroplus -port=8000`
 
