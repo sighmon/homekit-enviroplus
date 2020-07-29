@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
+	"./enviroplus"
 
 	"bufio"
 	"flag"
@@ -41,13 +42,11 @@ func main() {
 		FirmwareRevision: "1.0.0",
 	}
 
-	acc := accessory.NewTemperatureSensor(
-		info,
-		0.0,             // Initial value
-		-40.0,           // Min sensor value
-		85.0,            // Max sensor value
-		0.1,             // Step value
-	)
+	acc := accessory.NewEnviroPlus(info)
+	acc.TemperatureSensor.Name.SetValue = "BME280"
+	acc.HumiditySensor.Name.SetValue = "BME280"
+	acc.AirQualitySensor.Name.SetValue = "MICS6814 PMS5003"
+	acc.LightSensor.Name.SetValue = "LTR-559"
 
 	config := hc.Config{
 		// Change the default Apple Accessory Pin if you wish
@@ -63,6 +62,9 @@ func main() {
 
 	// Get the sensor readings every secondsBetweenReadings
 	go func() {
+		// Match the temperature line in the Prometheus data
+		// temperature 17.62804726392642
+		re := regexp.MustCompile(`^temperature ([-+]?\d*\.\d+|\d+)`)
 		for {
 			// Get readings from the Prometheus exporter
 			sensorReading := 0.0
@@ -73,7 +75,6 @@ func main() {
 				for scanner.Scan() {
 					line := scanner.Text()
 					// Parse the temperature reading
-					re := regexp.MustCompile(`^temperature ([-+]?\d*\.\d+|\d+)`)
 					rs := re.FindStringSubmatch(line)
 					if rs != nil {
 						parsedValue, err := strconv.ParseFloat(rs[1], 64)
@@ -82,6 +83,7 @@ func main() {
 						}
 					}
 				}
+				scanner = nil
 			} else {
 				log.Println(err)
 			}
@@ -92,7 +94,8 @@ func main() {
 			}
 
 			// Set the temperature reading on the accessory
-			acc.TempSensor.CurrentTemperature.SetValue(sensorReading)
+			acc.TemperatureSensor.CurrentTemperature.SetValue(sensorReading)
+			acc.HumiditySensor.CurrentHumidity.SetValue(sensorReading)
 			log.Println(fmt.Sprintf("Temperature: %f°C", sensorReading))
 
 			// Time between readings
