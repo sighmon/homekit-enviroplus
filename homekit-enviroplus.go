@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
+	"github.com/brutella/hc/service"
 
 	"bufio"
 	"flag"
@@ -55,6 +56,10 @@ func main() {
 		85.0,  // Max sensor value
 		0.1,   // Step value
 	)
+
+	humidity := service.NewHumiditySensor()
+	acc.AddService(humidity.Service)
+	acc.TempSensor.AddLinkedService(humidity.Service)
 
 	config := hc.Config{
 		// Change the default Apple Accessory Pin if you wish
@@ -154,7 +159,10 @@ func main() {
 						if rs != nil {
 							parsedValue, err := strconv.ParseFloat(rs[1], 64)
 							if err == nil {
-								println(fmt.Sprintf("%s %f", fieldname, parsedValue))
+								if developmentMode {
+									println(fmt.Sprintf("%s %f", fieldname, parsedValue))
+								}
+
 								// TODO: Work out how to set the Value of the Reading... this causes a panic
 								// reflect.ValueOf(readings).FieldByName(strings.ToTitle(fieldname)).FieldByName("Value").SetFloat(parsedValue)
 								// For now use switch
@@ -191,7 +199,7 @@ func main() {
 				log.Println(err)
 			}
 
-			if developmentMode == true {
+			if developmentMode {
 				// Return a random float between 15 and 30
 				readings.Temperature.Value = 15 + rand.Float64()*(30-15)
 			}
@@ -200,7 +208,9 @@ func main() {
 			// acc.TemperatureSensor.CurrentTemperature.SetValue(sensorReading)
 			// acc.HumiditySensor.CurrentRelativeHumidity.SetValue(40 + rand.Float64() * (70 - 40))
 			acc.TempSensor.CurrentTemperature.SetValue(readings.Temperature.Value)
+			humidity.CurrentRelativeHumidity.SetValue(readings.Humidity.Value)
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
+			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
 
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
