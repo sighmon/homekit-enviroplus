@@ -34,6 +34,47 @@ func init() {
 	}
 }
 
+func calculateAirQuality(pm25 float64, pm10 float64) int {
+	// Calculate the Air Quality using the EPA's forumla
+	// https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories
+	// HomeKit	1		2		3		4		5
+	// PM2.5	<27		27–62	62–97	97–370	>370
+	// PM10		<40		40–80	80–120	120–240	>240
+	pm25Quality := 0
+	pm10Quality := 0
+	switch {
+	case pm25 < 27:
+		pm25Quality = 1
+	case pm25 >= 27 && pm25 <= 61:
+		pm25Quality = 2
+	case pm25 >= 62 && pm25 <= 96:
+		pm25Quality = 3
+	case pm25 >= 97 && pm25 <= 369:
+		pm25Quality = 4
+	case pm25 >= 370:
+		pm25Quality = 5
+	}
+
+	switch {
+	case pm10 < 27:
+		pm10Quality = 1
+	case pm10 >= 27 && pm10 <= 61:
+		pm10Quality = 2
+	case pm10 >= 62 && pm10 <= 96:
+		pm10Quality = 3
+	case pm10 >= 97 && pm10 <= 369:
+		pm10Quality = 4
+	case pm10 >= 370:
+		pm10Quality = 5
+	}
+
+	if pm25Quality > pm10Quality {
+		return pm25Quality
+	}
+
+	return pm10Quality
+}
+
 func main() {
 	info := accessory.Info{
 		Name:             "Enviro+",
@@ -60,6 +101,10 @@ func main() {
 	humidity := service.NewHumiditySensor()
 	acc.AddService(humidity.Service)
 	acc.TempSensor.AddLinkedService(humidity.Service)
+
+	airQuality := service.NewAirQualitySensor()
+	acc.AddService(airQuality.Service)
+	acc.TempSensor.AddLinkedService(airQuality.Service)
 
 	config := hc.Config{
 		// Change the default Apple Accessory Pin if you wish
@@ -116,7 +161,7 @@ func main() {
 				Value: 0,
 			},
 			Nh3: Reading{
-				Name:  "nh3",
+				Name:  "NH3",
 				Value: 0,
 			},
 			Lux: Reading{
@@ -128,15 +173,15 @@ func main() {
 				Value: 0,
 			},
 			Pm1: Reading{
-				Name:  "pm1",
+				Name:  "PM1",
 				Value: 0,
 			},
 			Pm25: Reading{
-				Name:  "pm25",
+				Name:  "PM25",
 				Value: 0,
 			},
 			Pm10: Reading{
-				Name:  "pm10",
+				Name:  "PM10",
 				Value: 0,
 			},
 		}
@@ -163,9 +208,9 @@ func main() {
 									println(fmt.Sprintf("%s %f", fieldname, parsedValue))
 								}
 
-								// TODO: Work out how to set the Value of the Reading... this causes a panic
+								// TOFIX: Work out how to set the Value of the Reading... this causes a panic
 								// reflect.ValueOf(readings).FieldByName(strings.ToTitle(fieldname)).FieldByName("Value").SetFloat(parsedValue)
-								// For now use switch
+								// For now use a switch statement
 								switch fieldname {
 								case "temperature":
 									readings.Temperature.Value = parsedValue
@@ -177,17 +222,17 @@ func main() {
 									readings.Oxidising.Value = parsedValue
 								case "reducing":
 									readings.Reducing.Value = parsedValue
-								case "nh3":
+								case "NH3":
 									readings.Nh3.Value = parsedValue
 								case "lux":
 									readings.Lux.Value = parsedValue
 								case "proximity":
 									readings.Proximity.Value = parsedValue
-								case "pm1":
+								case "PM1":
 									readings.Pm1.Value = parsedValue
-								case "pm25":
+								case "PM25":
 									readings.Pm25.Value = parsedValue
-								case "pm10":
+								case "PM10":
 									readings.Pm10.Value = parsedValue
 								}
 							}
@@ -204,13 +249,15 @@ func main() {
 				readings.Temperature.Value = 15 + rand.Float64()*(30-15)
 			}
 
-			// Set the temperature reading on the accessory
-			// acc.TemperatureSensor.CurrentTemperature.SetValue(sensorReading)
-			// acc.HumiditySensor.CurrentRelativeHumidity.SetValue(40 + rand.Float64() * (70 - 40))
+			// Set the sensor readings
 			acc.TempSensor.CurrentTemperature.SetValue(readings.Temperature.Value)
+			acc.TempSensor.CurrentTemperature.SetStepValue(0.1)
 			humidity.CurrentRelativeHumidity.SetValue(readings.Humidity.Value)
+			humidity.CurrentRelativeHumidity.SetStepValue(0.1)
+			airQuality.AirQuality.SetValue(calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value))
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
+			log.Println(fmt.Sprintf("Air Quality: %d (PM2.5 %f, PM10 %f)", calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value), readings.Pm25.Value, readings.Pm10.Value))
 
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
