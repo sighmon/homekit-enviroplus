@@ -38,8 +38,8 @@ func calculateAirQuality(pm25 float64, pm10 float64) int {
 	// Calculate the Air Quality using the EPA's forumla
 	// https://www.epa.vic.gov.au/for-community/monitoring-your-environment/about-epa-airwatch/calculate-air-quality-categories
 	// HomeKit	1		2		3		4		5
-	// PM2.5	<27		27–62	62–97	97–370	>370
-	// PM10		<40		40–80	80–120	120–240	>240
+	// PM2.5	<27		27–62		62–97		97–370		>370
+	// PM10		<40		40–80		80–120		120–240		>240
 	pm25Quality := 0
 	pm10Quality := 0
 	switch {
