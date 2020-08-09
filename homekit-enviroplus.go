@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
+	"github.com/brutella/hc/characteristic"
 	"github.com/brutella/hc/service"
 
 	"bufio"
@@ -103,6 +104,10 @@ func main() {
 	acc.TempSensor.AddLinkedService(humidity.Service)
 
 	airQuality := service.NewAirQualitySensor()
+	pm25 := characteristic.NewPM2_5Density()
+	pm10 := characteristic.NewPM10Density()
+	airQuality.Service.AddCharacteristic(pm25.Characteristic)
+	airQuality.Service.AddCharacteristic(pm10.Characteristic)
 	acc.AddService(airQuality.Service)
 	acc.TempSensor.AddLinkedService(airQuality.Service)
 
@@ -255,6 +260,8 @@ func main() {
 			humidity.CurrentRelativeHumidity.SetValue(readings.Humidity.Value)
 			humidity.CurrentRelativeHumidity.SetStepValue(0.1)
 			airQuality.AirQuality.SetValue(calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value))
+			pm25.SetValue(readings.Pm25.Value)
+			pm10.SetValue(readings.Pm10.Value)
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
 			log.Println(fmt.Sprintf("Air Quality: %d (PM2.5 %f, PM10 %f)", calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value), readings.Pm25.Value, readings.Pm10.Value))
