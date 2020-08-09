@@ -106,8 +106,12 @@ func main() {
 	airQuality := service.NewAirQualitySensor()
 	pm25 := characteristic.NewPM2_5Density()
 	pm10 := characteristic.NewPM10Density()
+	carbonMonoxide := characteristic.NewCarbonMonoxideLevel()
+	nitrogenDioxide := characteristic.NewNitrogenDioxideDensity()
 	airQuality.Service.AddCharacteristic(pm25.Characteristic)
 	airQuality.Service.AddCharacteristic(pm10.Characteristic)
+	airQuality.Service.AddCharacteristic(carbonMonoxide.Characteristic)
+	airQuality.Service.AddCharacteristic(nitrogenDioxide.Characteristic)
 	acc.AddService(airQuality.Service)
 	acc.TempSensor.AddLinkedService(airQuality.Service)
 
@@ -262,9 +266,23 @@ func main() {
 			airQuality.AirQuality.SetValue(calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value))
 			pm25.SetValue(readings.Pm25.Value)
 			pm10.SetValue(readings.Pm10.Value)
+			// MICS6814 sensor for carbon monoxide resistance goes down with an increase in ppm (Value 0-100)
+			carbonMonoxideValue := (1000 - (readings.Reducing.Value / 1000)) / 100
+			carbonMonoxide.SetMaxValue(1000)
+			carbonMonoxide.SetValue(carbonMonoxideValue)
+			// MICS6814 sensor for nitrogen dioxide resistance goes up with an increase in ug/m3 (Value 0-1000)
+			nitrogenDioxideValue := readings.Oxidising.Value / 10000
+			nitrogenDioxide.SetValue(nitrogenDioxideValue)
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
-			log.Println(fmt.Sprintf("Air Quality: %d (PM2.5 %f, PM10 %f)", calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value), readings.Pm25.Value, readings.Pm10.Value))
+			log.Println(fmt.Sprintf(
+				"Air Quality: %d (PM2.5 %f, PM10 %f, CO %f, NO2 %f)",
+				calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value),
+				readings.Pm25.Value,
+				readings.Pm10.Value,
+				carbonMonoxideValue,
+				nitrogenDioxideValue,
+			))
 
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
