@@ -115,6 +115,10 @@ func main() {
 	acc.AddService(airQuality.Service)
 	acc.TempSensor.AddLinkedService(airQuality.Service)
 
+	lightSensor := service.NewLightSensor()
+	acc.AddService(lightSensor.Service)
+	acc.TempSensor.AddLinkedService(lightSensor.Service)
+
 	config := hc.Config{
 		// Change the default Apple Accessory Pin if you wish
 		Pin: "00102003",
@@ -263,6 +267,7 @@ func main() {
 			acc.TempSensor.CurrentTemperature.SetStepValue(0.1)
 			humidity.CurrentRelativeHumidity.SetValue(readings.Humidity.Value)
 			humidity.CurrentRelativeHumidity.SetStepValue(0.1)
+
 			airQuality.AirQuality.SetValue(calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value))
 			pm25.SetValue(readings.Pm25.Value)
 			pm10.SetValue(readings.Pm10.Value)
@@ -273,6 +278,9 @@ func main() {
 			// MICS6814 sensor for nitrogen dioxide resistance goes up with an increase in ug/m3 (Value 0-1000)
 			nitrogenDioxideValue := readings.Oxidising.Value / 10000
 			nitrogenDioxide.SetValue(nitrogenDioxideValue)
+
+			lightSensor.CurrentAmbientLightLevel.SetValue(readings.Lux.Value)
+
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
 			log.Println(fmt.Sprintf(
@@ -283,6 +291,7 @@ func main() {
 				carbonMonoxideValue,
 				nitrogenDioxideValue,
 			))
+			log.Println(fmt.Sprintf("Light: %f lux", readings.Lux.Value))
 
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
