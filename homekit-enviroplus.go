@@ -115,9 +115,13 @@ func main() {
 	acc.AddService(airQuality.Service)
 	acc.TempSensor.AddLinkedService(airQuality.Service)
 
-	lightSensor := service.NewLightSensor()
-	acc.AddService(lightSensor.Service)
-	acc.TempSensor.AddLinkedService(lightSensor.Service)
+	light := service.NewLightSensor()
+	acc.AddService(light.Service)
+	acc.TempSensor.AddLinkedService(light.Service)
+
+	motion := service.NewMotionSensor()
+	acc.AddService(motion.Service)
+	acc.TempSensor.AddLinkedService(motion.Service)
 
 	config := hc.Config{
 		// Change the default Apple Accessory Pin if you wish
@@ -279,7 +283,9 @@ func main() {
 			nitrogenDioxideValue := readings.Oxidising.Value / 10000
 			nitrogenDioxide.SetValue(nitrogenDioxideValue)
 
-			lightSensor.CurrentAmbientLightLevel.SetValue(readings.Lux.Value)
+			light.CurrentAmbientLightLevel.SetValue(readings.Lux.Value)
+
+			motion.MotionDetected.SetValue(readings.Proximity.Value > 5)
 
 			log.Println(fmt.Sprintf("Temperature: %f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %f RH", readings.Humidity.Value))
@@ -292,6 +298,7 @@ func main() {
 				nitrogenDioxideValue,
 			))
 			log.Println(fmt.Sprintf("Light: %f lux", readings.Lux.Value))
+			log.Println(fmt.Sprintf("Motion: %t (%f)", readings.Proximity.Value > 5, readings.Proximity.Value))
 
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
