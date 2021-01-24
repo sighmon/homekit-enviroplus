@@ -44,7 +44,7 @@ func init() {
 	flag.BoolVar(&developmentMode, "dev", false, "turn on development mode to return a random temperature reading, boolean")
 	flag.Parse()
 
-	if developmentMode == true {
+	if developmentMode {
 		log.Println("Development mode on, ignoring sensor and returning random values...")
 	}
 }
