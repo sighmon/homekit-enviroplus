@@ -15,6 +15,7 @@ import (
 
 	"github.com/rubiojr/go-enviroplus/bme280"
 	"github.com/rubiojr/go-enviroplus/ltr559"
+	"github.com/rubiojr/go-enviroplus/pms5003"
 )
 
 type Reading struct {
@@ -162,6 +163,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("error initializing bme280 sensors: %v\n", err)
 	}
+
+	pms, err := pms5003.New()
+	if err != nil {
+		log.Fatal("error initializing pme5003 sensor: %v\n")
+	}
+
+	go func() {
+		pms.StartReading()
+	}()
+
 	// Get the sensor readings every secondsBetweenReadings
 	go func() {
 		readings := Readings{
@@ -229,6 +240,12 @@ func main() {
 			if err != nil {
 				log.Printf("error reading proximity values: %v", err)
 			}
+
+			// PMS5003
+			pmv := pms.LastValue()
+			readings.Pm1.Value = float64(pmv.Pm10Std)
+			readings.Pm10.Value = float64(pmv.Pm25Std)
+			readings.Pm25.Value = float64(pmv.Pm100Std)
 
 			if developmentMode {
 				// Return a random float between 15 and 30
