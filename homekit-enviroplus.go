@@ -15,6 +15,7 @@ import (
 
 	"github.com/rubiojr/go-enviroplus/bme280"
 	"github.com/rubiojr/go-enviroplus/ltr559"
+	"github.com/rubiojr/go-enviroplus/mics6814"
 	"github.com/rubiojr/go-enviroplus/pms5003"
 )
 
@@ -168,9 +169,16 @@ func main() {
 	if err != nil {
 		log.Fatal("error initializing pme5003 sensor: %v\n")
 	}
-
 	go func() {
 		pms.StartReading()
+	}()
+
+	mics, err := mics6814.New()
+	if err != nil {
+		log.Fatal("error initializing mics6814 sensor: %v\n")
+	}
+	go func() {
+		mics.StartReading()
 	}()
 
 	// Get the sensor readings every secondsBetweenReadings
@@ -246,6 +254,12 @@ func main() {
 			readings.Pm1.Value = float64(pmv.Pm10Std)
 			readings.Pm10.Value = float64(pmv.Pm25Std)
 			readings.Pm25.Value = float64(pmv.Pm100Std)
+
+			// MICS6814
+			micsv := mics.LastValue()
+			readings.Oxidising.Value = micsv.Oxidising
+			readings.Reducing.Value = micsv.Reducing
+			readings.Nh3.Value = micsv.NH3
 
 			if developmentMode {
 				// Return a random float between 15 and 30
