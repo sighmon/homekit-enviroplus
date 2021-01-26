@@ -5,6 +5,8 @@ import (
 	"github.com/brutella/hc/accessory"
 	"github.com/brutella/hc/characteristic"
 	"github.com/brutella/hc/service"
+	"github.com/sighmon/homekit-enviroplus/internal/promexporter"
+	"github.com/sighmon/homekit-enviroplus/internal/types"
 	"periph.io/x/conn/physic"
 
 	"flag"
@@ -19,29 +21,14 @@ import (
 	"github.com/rubiojr/go-enviroplus/pms5003"
 )
 
-type Reading struct {
-	Name  string
-	Value float64
-}
-
-type Readings struct {
-	Temperature Reading
-	Humidity    Reading
-	Pressure    Reading
-	Oxidising   Reading
-	Reducing    Reading
-	Nh3         Reading
-	Lux         Reading
-	Proximity   Reading
-	Pm1         Reading
-	Pm25        Reading
-	Pm10        Reading
-}
-
 var secondsBetweenReadings time.Duration
 var developmentMode bool
+var promExporterAddr string
+var promExporter bool
 
 func init() {
+	flag.StringVar(&promExporterAddr, "prom-exporter-address", ":10006", "Prometheus exporter port number")
+	flag.BoolVar(&promExporter, "prom-exporter", false, "Enable the Prometheus exporter")
 	flag.DurationVar(&secondsBetweenReadings, "sleep", 1*time.Second, "how many seconds between sensor readings, an int followed by the duration")
 	flag.BoolVar(&developmentMode, "dev", false, "turn on development mode to return a random temperature reading, boolean")
 	flag.Parse()
@@ -150,6 +137,14 @@ func main() {
 		// StoragePath: "./db",
 	}
 
+	var promEx *promexporter.Exporter
+	if promExporter {
+		promEx = promexporter.New(promExporterAddr)
+		go func() {
+			promEx.Start()
+		}()
+	}
+
 	t, err := hc.NewIPTransport(config, acc.Accessory)
 	if err != nil {
 		log.Fatal(err)
@@ -183,48 +178,48 @@ func main() {
 
 	// Get the sensor readings every secondsBetweenReadings
 	go func() {
-		readings := Readings{
-			Temperature: Reading{
+		readings := types.Readings{
+			Temperature: types.Reading{
 				Name:  "temperature",
 				Value: 0,
 			},
-			Humidity: Reading{
+			Humidity: types.Reading{
 				Name:  "humidity",
 				Value: 0,
 			},
-			Pressure: Reading{
+			Pressure: types.Reading{
 				Name:  "pressure",
 				Value: 0,
 			},
-			Oxidising: Reading{
+			Oxidising: types.Reading{
 				Name:  "oxidising",
 				Value: 0,
 			},
-			Reducing: Reading{
+			Reducing: types.Reading{
 				Name:  "reducing",
 				Value: 0,
 			},
-			Nh3: Reading{
+			Nh3: types.Reading{
 				Name:  "NH3",
 				Value: 0,
 			},
-			Lux: Reading{
+			Lux: types.Reading{
 				Name:  "lux",
 				Value: 0,
 			},
-			Proximity: Reading{
+			Proximity: types.Reading{
 				Name:  "proximity",
 				Value: 0,
 			},
-			Pm1: Reading{
+			Pm1: types.Reading{
 				Name:  "PM1",
 				Value: 0,
 			},
-			Pm25: Reading{
+			Pm25: types.Reading{
 				Name:  "PM25",
 				Value: 0,
 			},
-			Pm10: Reading{
+			Pm10: types.Reading{
 				Name:  "PM10",
 				Value: 0,
 			},
@@ -303,6 +298,9 @@ func main() {
 			log.Println(fmt.Sprintf("Light: %.2f lux", readings.Lux.Value))
 			log.Println(fmt.Sprintf("Motion: %t (%.2f)", readings.Proximity.Value > 5, readings.Proximity.Value))
 
+			if promExporter {
+				promEx.UpdateReadings(&readings)
+			}
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
 		}
