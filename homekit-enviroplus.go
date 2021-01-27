@@ -5,6 +5,7 @@ import (
 	"github.com/brutella/hc/accessory"
 	"github.com/brutella/hc/characteristic"
 	"github.com/brutella/hc/service"
+	"github.com/sighmon/homekit-enviroplus/internal/influxexporter"
 	"github.com/sighmon/homekit-enviroplus/internal/promexporter"
 	"github.com/sighmon/homekit-enviroplus/internal/types"
 	"periph.io/x/conn/physic"
@@ -25,16 +26,35 @@ var secondsBetweenReadings time.Duration
 var developmentMode bool
 var promExporterAddr string
 var promExporter bool
+var influxExporter bool
+var sensorName string
+var exporters []Exporter
+
+type Exporter interface {
+	UpdateReadings(t *types.Readings)
+}
 
 func init() {
 	flag.StringVar(&promExporterAddr, "prom-exporter-address", ":10006", "Prometheus exporter port number")
+	flag.StringVar(&sensorName, "sensor-name", "Enviro+", "The device name used in metrics")
 	flag.BoolVar(&promExporter, "prom-exporter", false, "Enable the Prometheus exporter")
+	flag.BoolVar(&influxExporter, "influxdb-exporter", false, "Enable the InfluxDB exporter")
 	flag.DurationVar(&secondsBetweenReadings, "sleep", 1*time.Second, "how many seconds between sensor readings, an int followed by the duration")
 	flag.BoolVar(&developmentMode, "dev", false, "turn on development mode to return a random temperature reading, boolean")
 	flag.Parse()
 
 	if developmentMode {
 		log.Println("Development mode on, ignoring sensor and returning random values...")
+	}
+}
+
+func registerExporter(e Exporter) {
+	exporters = append(exporters, e)
+}
+
+func updateReadings(r *types.Readings) {
+	for _, e := range exporters {
+		e.UpdateReadings(r)
 	}
 }
 
@@ -137,12 +157,20 @@ func main() {
 		// StoragePath: "./db",
 	}
 
-	var promEx *promexporter.Exporter
 	if promExporter {
-		promEx = promexporter.New(promExporterAddr)
+		promEx := promexporter.New(promExporterAddr)
 		go func() {
 			promEx.Start()
 		}()
+		registerExporter(promEx)
+	}
+
+	if influxExporter {
+		influxEx, err := influxexporter.New(sensorName)
+		if err != nil {
+			panic(err)
+		}
+		registerExporter(influxEx)
 	}
 
 	t, err := hc.NewIPTransport(config, acc.Accessory)
@@ -298,9 +326,8 @@ func main() {
 			log.Println(fmt.Sprintf("Light: %.2f lux", readings.Lux.Value))
 			log.Println(fmt.Sprintf("Motion: %t (%.2f)", readings.Proximity.Value > 5, readings.Proximity.Value))
 
-			if promExporter {
-				promEx.UpdateReadings(&readings)
-			}
+			updateReadings(&readings)
+
 			// Time between readings
 			time.Sleep(secondsBetweenReadings)
 		}
