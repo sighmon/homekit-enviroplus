@@ -1,0 +1,13 @@
+[Unit]
+Description=HomeKit Enviroplus-exporter service
+After=network.target enviroplus-exporter.service
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/dev/homekit-enviroplus
+ExecStart=/home/pi/dev/homekit-enviroplus/homekit-enviroplus --port=8000
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

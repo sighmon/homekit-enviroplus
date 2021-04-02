@@ -31,6 +31,14 @@ Install this on a Raspberry Pi, or test it on macOS.
 1. Execute the executable: `./homekit-enviroplus`
 1. Or run with the command: `go run homekit-enviroplus.go`
 
+### Start automatically at boot
+
+1. sudo cp homekit-enviro.service /lib/systemd/system/homekit-enviro.service
+2. sudo systemctl daemon-reload
+3. sudo systemctl enable homekit-enviro.service
+4. sudo systemctl start homekit-enviro.service
+
+
 ### Optional flags
 
 The flag defaults can be overridden by handing them in at runtime:
