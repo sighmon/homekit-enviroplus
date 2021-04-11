@@ -323,8 +323,15 @@ func main() {
 				carbonMonoxideValue,
 				nitrogenDioxideValue,
 			))
+			log.Println(fmt.Sprintf(
+				"Gas: %.2f Oxidising, %.2f Reducing, %.2f NH3",
+				readings.Oxidising.Value,
+				readings.Reducing.Value,
+				readings.Nh3.Value,
+			))
 			log.Println(fmt.Sprintf("Light: %.2f lux", readings.Lux.Value))
 			log.Println(fmt.Sprintf("Motion: %t (%.2f)", readings.Proximity.Value > 5, readings.Proximity.Value))
+			log.Println("---")
 
 			updateReadings(&readings)
 
