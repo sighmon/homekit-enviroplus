@@ -315,9 +315,11 @@ func main() {
 
 			log.Println(fmt.Sprintf("Temperature: %.2f°C", readings.Temperature.Value))
 			log.Println(fmt.Sprintf("Humidity: %.2f RH", readings.Humidity.Value))
+			log.Println(fmt.Sprintf("Pressure: %.2f hPa", readings.Pressure.Value))
 			log.Println(fmt.Sprintf(
-				"Air Quality: %d (PM2.5 %f, PM10 %f, CO %f, NO2 %f)",
+				"Air Quality: %d (PM1.0 %f, PM2.5 %f, PM10 %f, CO %f, NO2 %f)",
 				calculateAirQuality(readings.Pm25.Value, readings.Pm10.Value),
+				readings.Pm1.Value,
 				readings.Pm25.Value,
 				readings.Pm10.Value,
 				carbonMonoxideValue,
