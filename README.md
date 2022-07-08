@@ -50,6 +50,11 @@ The flag defaults can be overridden by handing them in at runtime:
 
 e.g. to override the port run: `go run homekit-enviroplus.go -port=8000` or `./homekit-enviroplus -port=8000`
 
+## Add to Homekit
+
+1. In iOS Home, click Add Accessory -> "More options..." and you should see "Enviro"
+1. The default code is `00102003` and can be changed via [this line](https://github.com/sighmon/homekit-enviroplus/blob/master/homekit-enviroplus.go#L128)
+
 ## Reset this accessory
 
 If you uninstall this accessory from your Apple Home, you'll also need to delete the stored data for it to be able to be re-added.
