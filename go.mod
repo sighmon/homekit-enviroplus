@@ -4,6 +4,8 @@ go 1.18
 
 require github.com/brutella/hc v1.2.5
 
+require gopkg.in/yaml.v2 v2.2.8 // indirect
+
 require (
 	github.com/brutella/dnssd v1.2.5 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
